@@ -4,5 +4,5 @@ internal sealed class PakFile(string name, string path, int flags, long dataOffs
 {
     public long DataOffset { get; set; } = dataOffset;
     public long DataSize { get; } = dataSize;
-    public int Checksum { get; } = checksum;
+    public int Checksum { get; set; } = checksum;
 }

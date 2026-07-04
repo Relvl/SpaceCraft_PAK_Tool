@@ -1,5 +1,3 @@
-using PakTool.IO;
-
 namespace PakTool.Pak;
 
 internal static class PakDirectoryScanner
@@ -7,16 +5,16 @@ internal static class PakDirectoryScanner
     public static PakDirectory Scan(string inputDirectory, string outputPak)
     {
         var normalizedOutputPak = Path.GetFullPath(outputPak);
-        return ScanDirectory(Path.GetFullPath(inputDirectory), "", normalizedOutputPak);
+        return ScanDirectory(new DirectoryInfo(Path.GetFullPath(inputDirectory)), "", normalizedOutputPak);
     }
 
-    private static PakDirectory ScanDirectory(string directory, string parentPath, string outputPak)
+    private static PakDirectory ScanDirectory(DirectoryInfo directory, string parentPath, string outputPak)
     {
-        var children = Directory.EnumerateFileSystemEntries(directory)
-            .Where(path => ShouldInclude(path, outputPak))
-            .OrderBy(path => Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)
-            .ThenBy(path => Path.GetFileName(path), StringComparer.Ordinal)
-            .SelectMany(child => ScanChild(child, parentPath, outputPak))
+        var children = directory.EnumerateFileSystemInfos()
+            .Where(entry => ShouldInclude(entry.FullName, outputPak))
+            .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(entry => entry.Name, StringComparer.Ordinal)
+            .SelectMany(entry => ScanChild(entry, parentPath, outputPak))
             .ToList();
 
         return new PakDirectory(
@@ -26,28 +24,27 @@ internal static class PakDirectoryScanner
             children);
     }
 
-    private static IEnumerable<PakNode> ScanChild(string child, string parentPath, string outputPak)
+    private static IEnumerable<PakNode> ScanChild(FileSystemInfo entry, string parentPath, string outputPak)
     {
-        if (Directory.Exists(child))
+        if (entry is DirectoryInfo directory)
         {
-            var entryName = Path.GetFileName(child);
+            var entryName = directory.Name;
             var entryPath = entryName.ToPakPath(parentPath);
-            var selfFile = Path.Combine(child, PakConstants.SelfFileName);
+            var selfFile = new FileInfo(Path.Combine(directory.FullName, PakConstants.SelfFileName));
 
-            if (File.Exists(selfFile)) yield return FileNode(entryName, entryPath, selfFile);
-            yield return ScanDirectory(child, entryPath, outputPak);
+            if (selfFile.Exists) yield return FileNode(entryName, entryPath, selfFile);
+            yield return ScanDirectory(directory, entryPath, outputPak);
             yield break;
         }
 
-        if (!File.Exists(child) || Path.GetFileName(child) == PakConstants.SelfFileName) yield break;
+        if (entry is not FileInfo file || file.Name == PakConstants.SelfFileName) yield break;
 
-        var name = Path.GetFileName(child);
-        yield return FileNode(name, name.ToPakPath(parentPath), child);
+        yield return FileNode(file.Name, file.Name.ToPakPath(parentPath), file);
     }
 
-    private static PakFile FileNode(string name, string path, string source)
+    private static PakFile FileNode(string name, string path, FileInfo source)
     {
-        return new PakFile(name, path, 0, 0, new FileInfo(source).Length, Crc32.Compute(source));
+        return new PakFile(name, path, 0, 0, source.Length, 0);
     }
 
     private static bool ShouldInclude(string path, string outputPak)
