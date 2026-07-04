@@ -32,11 +32,11 @@ jobs:
           echo "TAG=v${version}" >> "$GITHUB_ENV"
 
       - name: Publish Windows x64
-        run: dotnet publish PakTool.csproj -c Release -r win-x64 -p:Version=${VERSION} -p:SelfContained=true -p:PublishSingleFile=true -o publish/win-x64
+        run: dotnet publish PakTool.csproj -c Release -r win-x64 --self-contained false -p:Version=${VERSION} -p:PublishSingleFile=true -o publish/win-x64
 
       - name: Publish Linux x64
-        run: dotnet publish PakTool.csproj -c Release -r linux-x64 -p:Version=${VERSION} -p:SelfContained=true -p:PublishSingleFile=true -o publish/linux-x64
-
+        run: dotnet publish PakTool.csproj -c Release -r linux-x64 --self-contained false -p:Version=${VERSION} -p:PublishSingleFile=true -o publish/linux-x64
+        
       - name: Package release assets
         shell: bash
         run: |
