@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Compute version
+        shell: bash
+        run: |
+          patch=$((GITHUB_RUN_NUMBER - 1))
+          version="1.0.${patch}"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          echo "TAG=v${version}" >> "$GITHUB_ENV"
+
+      - name: Publish Windows x64
+        run: dotnet publish PakTool.csproj -c Release -r win-x64 -p:Version=${VERSION} -p:SelfContained=true -p:PublishSingleFile=true -o publish/win-x64
+
+      - name: Publish Linux x64
+        run: dotnet publish PakTool.csproj -c Release -r linux-x64 -p:Version=${VERSION} -p:SelfContained=true -p:PublishSingleFile=true -o publish/linux-x64
+
+      - name: Package release assets
+        shell: bash
+        run: |
+          mkdir -p dist
+          (cd publish/win-x64 && zip -9 -r ../../dist/PakTool-${VERSION}-win-x64.zip .)
+          tar -C publish/linux-x64 -czf dist/PakTool-${VERSION}-linux-x64.tar.gz .
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.TAG }}
+          name: PakTool ${{ env.VERSION }}
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            dist/PakTool-${{ env.VERSION }}-win-x64.zip
+            dist/PakTool-${{ env.VERSION }}-linux-x64.tar.gz
