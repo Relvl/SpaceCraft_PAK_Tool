@@ -18,6 +18,14 @@ Builds are produced by GitHub Actions from the current source code in this repos
 
 You should still verify any executable file you download before running it. This applies to releases from this repository as well as any files shared elsewhere. When in doubt, build from source and compare the result with the published artifact.
 
+## Contributing
+
+I do not monitor GitHub Issues and Pull Requests on a regular basis.
+
+If you want to contribute or need a faster response, contact me on Discord first: `Johnson1893`
+
+This will significantly speed up coordination and review.
+
 ## Requirements
 
 PakTool currently targets **.NET 10**.
@@ -233,11 +241,3 @@ For real game installations, do not overwrite original files without a backup. A
 The supported format is based on the `hxd.fmt.pak` archive layout used by Heaps/Haxe applications. In this format, archive entries are stored in a serialized file tree, and file data offsets are relative to the beginning of the data block rather than absolute physical file offsets.
 
 PakTool is intentionally conservative about producing complete metadata, including CRC32 values, even if a particular observed application version does not currently validate all fields.
-
-## Contributing
-
-I do not monitor GitHub Issues and Pull Requests on a regular basis.
-
-If you want to contribute or need a faster response, contact me on Discord first: `Johnson1893`
-
-This will significantly speed up coordination and review.
